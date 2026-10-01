@@ -1,0 +1,247 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Substack Morning Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of reply cards, a sticky filter bar, source health up top. AISGRC navy + amber (BRAND.md). */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #0d1b2b;
+  --muted: #5a6676;
+  --line: #dde2e9;
+  --accent: #c8963a;
+  --accent-ink: #7a5414;
+  --accent-soft: #f6ecd9;
+  --navy: #0d1b2b;
+  --on-navy: #f3f5f8;
+  --ok: #2f7d4f;
+  --warn: #b5541c;
+  --slot-bg: #fff7e6;
+  --font-body: "Inter", "Segoe UI", Calibri, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b141f; --surface: #12202f; --ink: #e8edf3; --muted: #9aa8b8; --line: #23364a;
+    --accent: #d9a84f; --accent-ink: #f0c983; --accent-soft: #2a2414; --navy: #08111b; --on-navy: #e8edf3;
+    --ok: #5cbf86; --warn: #e88a52; --slot-bg: #2b2414; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b141f; --surface: #12202f; --ink: #e8edf3; --muted: #9aa8b8; --line: #23364a;
+  --accent: #d9a84f; --accent-ink: #f0c983; --accent-soft: #2a2414; --navy: #08111b; --on-navy: #e8edf3;
+  --ok: #5cbf86; --warn: #e88a52; --slot-bg: #2b2414; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
+header.top { background: var(--navy); color: var(--on-navy); padding-block: 28px 22px; }
+header.top .wrap { padding-block: 0; display: grid; gap: 6px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 700; text-wrap: balance; }
+.summary { color: var(--on-navy); opacity: .85; font-size: 14px; }
+.health { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { font: 500 12px/1 var(--font-mono); padding: 5px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.chip.ok { color: #8fd3ab; } .chip.failed, .chip.partial { color: #f2a272; }
+nav.filters { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
+nav.filters .wrap { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 10px; }
+.fbtn { font: 500 13px/1 var(--font-body); padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.fbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.fbtn .n { font-family: var(--font-mono); opacity: .7; margin-left: 4px; font-variant-numeric: tabular-nums; }
+main .wrap { display: grid; gap: 14px; padding-top: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.card.done { opacity: .55; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--muted); }
+.kind { font: 600 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent-ink); }
+.kind.note { background: transparent; border: 1px solid var(--accent); }
+.meta .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+h2 { margin: 0; font-size: 18px; line-height: 1.3; text-wrap: balance; }
+h2 a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); }
+h2 a:hover, h2 a:focus-visible { border-color: var(--accent); }
+.why { font-size: 13px; color: var(--muted); }
+.why b { color: var(--ink); font-weight: 600; }
+.summary-text { margin: 0; }
+.flag { font-size: 13px; color: var(--warn); border-left: 3px solid var(--warn); padding-left: 8px; }
+.reply { border-top: 1px dashed var(--line); padding-top: 12px; display: grid; gap: 8px; }
+.reply-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.reply-label { font: 600 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.reply-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.slot { display: inline-block; min-width: 12ch; max-width: 100%; padding: 1px 6px; border: 1px dashed var(--accent); border-radius: 4px; background: var(--slot-bg); color: var(--ink); font: inherit; }
+.slot:empty::before { content: attr(data-placeholder); color: var(--accent-ink); opacity: .8; }
+.slot:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { font: 600 13px/1 var(--font-body); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1b1305; }
+.btn:focus-visible, .fbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.status { font-size: 12px; color: var(--ok); min-height: 1em; }
+.status.warn { color: var(--warn); }
+.empty { text-align: center; color: var(--muted); padding: 40px 16px; }
+footer { color: var(--muted); font-size: 12px; text-align: center; padding-top: 24px; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: opacity .2s; } }
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow" id="eyebrow">Substack morning brief</div>
+  <h1 id="headline">Today's comment queue</h1>
+  <div class="summary" id="summary"></div>
+  <div class="health" id="health"></div>
+</div></header>
+
+<nav class="filters" aria-label="Filter items"><div class="wrap" id="filters"></div></nav>
+
+<main><div class="wrap" id="list"></div></main>
+<footer><div class="wrap">Drafts only. Nothing here posts to Substack. Read the post before you paste a reply.</div></footer>
+
+<script>
+const BRIEF = /*__BRIEF_DATA__*/null;
+
+(function () {
+  const list = document.getElementById('list');
+  if (!BRIEF || !Array.isArray(BRIEF.items)) {
+    list.innerHTML = '<p class="empty">No brief loaded yet. Run the substack-morning skill and say "go" to fill this page.</p>';
+    return;
+  }
+
+  const key = 'smb:' + (BRIEF.date || 'undated');
+  let marks = {};
+  try { marks = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (e) { marks = {}; }
+  const saveMarks = () => { try { localStorage.setItem(key, JSON.stringify(marks)); } catch (e) {} };
+
+  const el = (tag, attrs, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v; else n.setAttribute(k, v);
+    }
+    kids.flat().forEach(c => c != null && n.append(c));
+    return n;
+  };
+  const fmtDate = iso => { try { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return iso || ''; } };
+
+  // Header
+  const items = BRIEF.items;
+  const nArt = items.filter(i => i.kind === 'article').length, nNote = items.length - nArt;
+  document.getElementById('headline').textContent = 'Comment queue for ' + (BRIEF.date || 'today');
+  document.getElementById('summary').textContent = items.length + ' items: ' + nArt + ' articles, ' + nNote + ' Notes. Reply A is ready to paste. Reply B waits for your view.';
+  const health = document.getElementById('health');
+  (BRIEF.source_health || []).forEach(s => {
+    health.append(el('span', { class: 'chip ' + (s.status || 'ok'), title: s.error || '', text: s.source + (s.status === 'ok' ? ' ' + (s.count ?? '') : ' ' + s.status) }));
+  });
+
+  // Copy helper with fallback to selecting the text
+  async function copyText(text, statusEl, fallbackNode) {
+    try { await navigator.clipboard.writeText(text); statusEl.textContent = 'Copied'; statusEl.classList.remove('warn'); }
+    catch (e) {
+      if (fallbackNode) { const r = document.createRange(); r.selectNodeContents(fallbackNode); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+      statusEl.textContent = 'Copy blocked here. Text is selected, press Ctrl+C.'; statusEl.classList.add('warn');
+    }
+  }
+
+  // Build reply B with [slot] placeholders as editable fields
+  function buildReplyB(text) {
+    const p = el('p', { class: 'reply-text' });
+    const parts = String(text).split(/(\[[^\]]+\])/g);
+    parts.forEach(part => {
+      if (/^\[[^\]]+\]$/.test(part)) {
+        const s = el('span', { class: 'slot', contenteditable: 'true', role: 'textbox', 'aria-label': part.slice(1, -1), 'data-placeholder': part.slice(1, -1) });
+        p.append(s);
+      } else if (part) p.append(document.createTextNode(part));
+    });
+    return p;
+  }
+  function composeB(p) {
+    let out = '', missing = false;
+    p.childNodes.forEach(n => {
+      if (n.nodeType === 1 && n.classList.contains('slot')) { const v = n.textContent.trim(); if (!v) missing = true; out += v; }
+      else out += n.textContent;
+    });
+    return { text: out.replace(/\s+([.,;:!?])/g, '$1').replace(/ {2,}/g, ' ').trim(), missing };
+  }
+
+  function card(it) {
+    const c = el('article', { class: 'card', id: 'item-' + String(it.id).replace(/[^a-z0-9_-]/gi, '-') });
+    const isNote = it.kind === 'note';
+    c.append(el('div', { class: 'meta' },
+      el('span', { class: 'kind' + (isNote ? ' note' : ''), text: isNote ? 'Note' : 'Article' }),
+      el('span', { text: [it.writer, it.publication].filter(Boolean).join(' · ') }),
+      it.published_at ? el('span', { text: fmtDate(it.published_at) }) : null,
+      el('span', { class: 'num', text: (it.comment_count ?? 0) + ' comments' })
+    ));
+    c.append(el('h2', {}, el('a', { href: it.url, target: '_blank', rel: 'noopener', text: it.title || (isNote ? 'Note by ' + it.writer : 'Untitled') })));
+    if (it.why) c.append(el('div', { class: 'why' }, el('b', { text: 'Why this one: ' }), it.why));
+    if (it.summary) c.append(el('p', { class: 'summary-text', text: it.summary }));
+    (it.flags || []).forEach(f => c.append(el('div', { class: 'flag', text: f })));
+
+    // Reply A
+    const aText = el('p', { class: 'reply-text', text: it.reply_a });
+    const aStatus = el('span', { class: 'status', 'aria-live': 'polite' });
+    const aBtn = el('button', { class: 'btn primary', type: 'button', text: 'Copy reply A' });
+    aBtn.addEventListener('click', () => copyText(it.reply_a, aStatus, aText));
+    c.append(el('section', { class: 'reply' }, el('div', { class: 'reply-head' }, el('span', { class: 'reply-label', text: 'Reply A · ready to paste' }), aStatus), aText, el('div', { class: 'actions' }, aBtn)));
+
+    // Reply B
+    const bText = buildReplyB(it.reply_b || '');
+    const bStatus = el('span', { class: 'status', 'aria-live': 'polite' });
+    const bBtn = el('button', { class: 'btn', type: 'button', text: 'Copy reply B' });
+    bBtn.addEventListener('click', () => {
+      const { text, missing } = composeB(bText);
+      if (missing) { bStatus.textContent = 'Type your view in the highlighted box first.'; bStatus.classList.add('warn'); const s = bText.querySelector('.slot'); s && s.focus(); return; }
+      copyText(text, bStatus, bText);
+    });
+    c.append(el('section', { class: 'reply' }, el('div', { class: 'reply-head' }, el('span', { class: 'reply-label', text: 'Reply B · add your view' }), bStatus), bText, el('div', { class: 'actions' }, bBtn)));
+
+    // Done / skip
+    const doneBtn = el('button', { class: 'btn', type: 'button' });
+    const skipBtn = el('button', { class: 'btn', type: 'button' });
+    const paint = () => {
+      const m = marks[it.id];
+      c.classList.toggle('done', !!m);
+      doneBtn.textContent = m === 'done' ? 'Commented ✓' : 'Mark commented';
+      skipBtn.textContent = m === 'skip' ? 'Skipped' : 'Skip';
+      updateCounts();
+    };
+    doneBtn.addEventListener('click', () => { marks[it.id] = marks[it.id] === 'done' ? undefined : 'done'; saveMarks(); paint(); applyFilter(); });
+    skipBtn.addEventListener('click', () => { marks[it.id] = marks[it.id] === 'skip' ? undefined : 'skip'; saveMarks(); paint(); applyFilter(); });
+    c.append(el('div', { class: 'actions' }, doneBtn, skipBtn));
+    c._paint = paint; c._item = it;
+    return c;
+  }
+
+  const cards = items.map(card);
+  list.append(...cards);
+
+  // Filters
+  const filters = [
+    ['todo', 'To do', it => !marks[it.id]],
+    ['all', 'All', () => true],
+    ['article', 'Articles', it => it.kind === 'article'],
+    ['note', 'Notes', it => it.kind === 'note'],
+    ['done', 'Handled', it => !!marks[it.id]],
+  ];
+  let active = 'todo';
+  try { active = sessionStorage.getItem(key + ':f') || 'todo'; } catch (e) {}
+  const fwrap = document.getElementById('filters');
+  const fbtns = filters.map(([id, label]) => {
+    const b = el('button', { class: 'fbtn', type: 'button', 'aria-pressed': String(id === active) }, label, el('span', { class: 'n' }));
+    b.addEventListener('click', () => { active = id; try { sessionStorage.setItem(key + ':f', id); } catch (e) {} applyFilter(); });
+    fwrap.append(b); return b;
+  });
+  function updateCounts() {
+    if (!fbtns) return;
+    filters.forEach(([, , fn], i) => { const n = fbtns[i] && fbtns[i].querySelector('.n'); if (n) n.textContent = items.filter(fn).length; });
+  }
+  function applyFilter() {
+    const fn = filters.find(f => f[0] === active)[2];
+    filters.forEach(([id], i) => fbtns[i].setAttribute('aria-pressed', String(id === active)));
+    let shown = 0;
+    cards.forEach(c => { const v = fn(c._item); c.hidden = !v; if (v) shown++; });
+    let e = document.getElementById('none');
+    if (!shown) { if (!e) { e = el('p', { class: 'empty', id: 'none', text: 'Nothing left in this view. Nice work.' }); list.append(e); } }
+    else if (e) e.remove();
+    updateCounts();
+  }
+  cards.forEach(c => c._paint());
+  applyFilter();
+})();
+</script>
