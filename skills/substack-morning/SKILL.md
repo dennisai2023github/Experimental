@@ -1,6 +1,6 @@
 ---
 name: substack-morning
-description: Dennis's daily Substack comment queue. Reads his Substack (subscriptions, writers he follows, recommended feed, keyword search on AI, risk, cyber and compliance topics) with his own cookie, read-only, picks 10+ fresh articles and Notes worth commenting on, and drafts two value-added replies for each (A ready to paste, B with a slot for his own view) on a private brief page. Use when Dennis says "go" to the morning Substack brief prompt, types /substack-morning, or asks for his morning brief, comment queue, things to comment on, or engagement on Substack today. Never posts, likes, or restacks anything.
+description: Dennis's daily Substack comment queue. Reads his Substack (subscriptions, writers he follows, recommended feed, keyword search on AI, risk, cyber and compliance topics) with his own cookie, read-only, picks 10+ fresh articles and Notes worth commenting on, and drafts two value-added replies for each (A ready to paste, B with a slot for his own view) on a brief page that opens in his browser. Runs unattended when started by its startup hook. Use whenever a prompt says to run the substack-morning skill, Dennis types /substack-morning, or he asks for his morning brief, comment queue, things to comment on, or Substack engagement today. Never posts, likes, or restacks anything.
 ---
 
 # Substack Morning Brief
@@ -11,12 +11,13 @@ The skill reads Substack and writes drafts. It has no way to post, and that is d
 
 Paths below are relative to this skill's folder. The script is `scripts/substack_morning.py` and needs only Python 3.10+.
 
-## Step 0: The go gate
+## Step 0: How this run started
 
-Dennis's SYSTEM.md forbids generating content until he says "go".
+Dennis chose to have the brief run on its own each morning. That choice is his standing "go" for this skill, so it is exempt from the "say go first" content gate in his SYSTEM.md. Never ask him whether to run it.
 
-- If this run started from the startup reminder, ask exactly: **"Morning Substack brief: go or skip?"** and wait. On "skip", stop and do nothing else.
-- If Dennis asked for the brief himself ("run my morning brief", `/substack-morning`), that request is the go.
+There are two ways a run starts:
+- **Unattended (the normal case).** Opening Claude Code fires a startup hook. The hook launches a background `claude -p` session whose prompt says "unattended mode". In this mode, never ask a question. Make every choice yourself using this file, finish all the steps, and end by running `open` (step 7). He reviews the result in his browser.
+- **Interactive.** Dennis types `/substack-morning` or asks for the brief. Run the same steps, and you may answer him in chat as you go.
 
 ## Step 1: Check today's state
 
@@ -24,7 +25,9 @@ Dennis's SYSTEM.md forbids generating content until he says "go".
 python scripts/substack_morning.py status
 ```
 
-If today's brief already exists, give him the page (the artifact link if one is saved in `config.json` as `artifact_url`, otherwise the local HTML path) and ask whether he wants a fresh run. Only rebuild if he says so. This keeps a second Claude session from logging in to Substack again for no reason.
+If today's brief already exists:
+- **Unattended:** stop. The hook only starts a run when no brief exists, so an existing brief means another session got there first.
+- **Interactive:** give him the link and only rebuild if he asks. This avoids logging in to Substack twice for no reason.
 
 ## Step 2: Load his voice
 
@@ -47,7 +50,9 @@ python scripts/substack_morning.py collect --out <home>/briefs/<YYYY-MM-DD>-cand
 - scores the rest and returns a balanced pool of articles and Notes with their full text
 
 Read `source_health` first:
-- If the cookie is missing or expired, the script says so. Point him to step 3 of `references/setup-windows.md` and stop. Never ask him to paste the cookie into the chat.
+- If the cookie is missing or expired, the script says so. Never ask him to paste the cookie into the chat.
+  - **Interactive:** point him to step 3 of `references/setup-windows.md` and stop.
+  - **Unattended:** run `python scripts/substack_morning.py fail --reason "Substack login expired: copy a fresh substack.sid into .env (setup guide step 3)"` and stop. The next message he sends in Claude will carry that note to him.
 - If a single source failed, carry on and mention it in one line at the end. The page shows it too.
 
 ## Step 4: Choose today's items
@@ -91,26 +96,26 @@ python scripts/substack_morning.py render --drafts <home>/briefs/<YYYY-MM-DD>-dr
 
 This writes the day's HTML page, a Markdown copy and a JSON copy. It refuses to render (exit 2) if any dash slipped through or a Reply B has no slot. If that happens, fix the named items and run it again.
 
-## Step 7: Deliver
-
-- **If the Artifact tool is available**, publish the rendered HTML as a private artifact.
-  - First time: publish with icon `inbox` and description "Daily queue of Substack posts and Notes to comment on, with drafted replies". Then save the returned URL into `config.json` as `artifact_url`.
-  - Later mornings: republish to that same URL, so he keeps one bookmark.
-- **Otherwise**, open the local HTML file (`start "" "<path>"` on Windows) and give him the path.
-
-## Step 8: Commit
+## Step 7: Commit, then open the cards
 
 ```
 python scripts/substack_morning.py commit --drafts <home>/briefs/<YYYY-MM-DD>-drafts.json
+python scripts/substack_morning.py open
 ```
 
-This records the items as seen and sets the time of the last brief, so tomorrow starts from here. Only commit after the page is delivered.
+`commit` records the items as seen and sets the time of the last brief, so tomorrow starts from here. `open` brings up today's page with every card in his default browser. That is the "ready, review now" moment.
 
-## Step 9: Report in three lines
+When he next sends a message in Claude Code, the startup hook adds "your Substack brief is ready" plus the clickable link. When you see that note, start your reply with one line giving him the link as a markdown link, then answer what he actually asked.
 
-1. How many items there are (articles and Notes) and the page link or path.
-2. Any failed source, in plain words.
-3. Which one or two items you'd do first, and why.
+**Optional artifact.** If the Artifact tool is available in an interactive session, you may also publish the HTML as a private artifact. Use icon `inbox` and the description "Daily queue of Substack posts and Notes to comment on, with drafted replies". Save the returned URL as `artifact_url` in `config.json`; `open` will prefer it from then on. Republish to the same URL on later mornings. Unattended runs keep the local page.
+
+## Step 8: Report
+
+- **Unattended:** the log file is the report. Print three lines at the end:
+  1. how many articles and Notes are in the brief
+  2. any failed source
+  3. the one or two items you'd do first
+- **Interactive:** give the same three lines in chat, with the link.
 
 If the session is running inside his AISGRC-OS project, add a one-line Session Log entry to `SESSION.md`, per his save rules.
 

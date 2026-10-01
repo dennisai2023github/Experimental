@@ -47,9 +47,17 @@ You should see `cookie: present`, your user id, how many publications you subscr
 
 Substack has no official API. If a Substack change breaks one source, the brief still runs and shows that source in orange at the top. Tell Claude which source failed and it can adjust the script.
 
-## 5. The morning reminder (Claude Code desktop)
+## 5. Make it run by itself each morning (Claude Code desktop)
 
-Add a SessionStart hook so Claude asks "Morning Substack brief: go or skip?" the first time you open it each day. Open `C:\Users\amule\.claude\settings.json` (create it if missing) and add:
+The brief is built by a background Claude session that starts when you open Claude Code. That needs the `claude` command to work from a terminal. Test it:
+
+```
+claude --version
+```
+
+If Windows says it can't find `claude`, install the Claude Code command-line tool (https://code.claude.com). Or set `"claude_command"` in `C:\Users\amule\.substack-morning\config.json` to its full path.
+
+Next, add the startup hook. Open `C:\Users\amule\.claude\settings.json` (create it if missing) and add:
 
 ```json
 {
@@ -70,10 +78,20 @@ Add a SessionStart hook so Claude asks "Morning Substack brief: go or skip?" the
 
 If the file already has content, merge the `hooks` block in rather than replacing the file. Use `py` instead of `python` if that is how Python runs on your PC.
 
-How it behaves:
-- Once today's brief exists, the hook prints nothing, so later sessions that day stay quiet.
-- The hook never blocks Claude from starting, even if Python or the script has a problem.
-- Nothing is fetched until you say "go". That matches the content gate in your SYSTEM.md.
+How it behaves each day:
+1. **First time you open Claude Code.** The hook starts a background Claude job and returns at once, so you can work as normal.
+2. **About 2 to 5 minutes later.** The job has fetched from Substack, drafted the replies and built the page. Today's brief then **opens in your browser by itself**, with every card on it.
+3. **Your next message in Claude.** Claude starts its answer with "your Substack brief is ready" and a clickable link, in case you closed the tab.
+4. **Later the same day.** Opening Claude again changes nothing. It runs once per day.
+5. **If something fails** (usually an expired cookie). Your next message in Claude tells you in one line what to fix, and it won't retry until tomorrow.
+
+The background job's log for each day is in `C:\Users\amule\.substack-morning\logs\`. The hook never blocks Claude from starting, even if Python or the script has a problem.
+
+**SYSTEM.md note.** Your SYSTEM.md has a "do not generate content until Dennis says go" gate. You chose to have this brief run automatically, so add the following line under that gate so future sessions don't fight it:
+
+```
+Exception: the substack-morning skill runs automatically at session start (approved by Dennis). Its drafts are a review queue, never published.
+```
 
 ## 6. Cowork
 
@@ -81,7 +99,7 @@ Cowork can use the skill by uploading `Substack_Morning_v1.0.skill` under Settin
 - whether Cowork's sandbox can reach substack.com, and
 - whether it has a startup hook.
 
-So in Cowork, type `/substack-morning` (or "run my morning Substack brief") to start it manually. If the fetch fails in Cowork, run the morning brief from Claude Code desktop instead.
+So the automatic morning run comes from Claude Code desktop. Open it once in the morning, even if you then work in Cowork. In Cowork itself you can type `/substack-morning` to run the brief by hand. If the fetch fails there, use Claude Code.
 
 ## 7. Optional: add it to SYSTEM.md
 

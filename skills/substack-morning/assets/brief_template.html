@@ -100,7 +100,7 @@ const BRIEF = /*__BRIEF_DATA__*/null;
 (function () {
   const list = document.getElementById('list');
   if (!BRIEF || !Array.isArray(BRIEF.items)) {
-    list.innerHTML = '<p class="empty">No brief loaded yet. Run the substack-morning skill and say "go" to fill this page.</p>';
+    list.innerHTML = '<p class="empty">No brief loaded yet. It fills in automatically after you open Claude Code in the morning.</p>';
     return;
   }
 
