@@ -1,0 +1,48 @@
+{
+  "publications": [
+    {
+      "id": 1,
+      "name": "Example Pub",
+      "subdomain": "example-pub",
+      "custom_domain": null,
+      "subscriber_count": 5000
+    },
+    {
+      "id": 2,
+      "name": "Paid Example",
+      "subdomain": "paid-pub",
+      "custom_domain": "paid.example.com",
+      "freeSubscriberCount": "12,000"
+    },
+    {
+      "id": 3,
+      "name": "Locked Example",
+      "subdomain": "locked-pub",
+      "custom_domain": null
+    },
+    {
+      "id": 4,
+      "name": "Own Example",
+      "subdomain": "own-pub",
+      "custom_domain": null
+    }
+  ],
+  "subscriptions": [
+    {
+      "publication_id": 1,
+      "membership_state": "subscribed"
+    },
+    {
+      "publication_id": 2,
+      "membership_state": "paid"
+    },
+    {
+      "publication_id": 3,
+      "membership_state": "free_signup"
+    },
+    {
+      "publication_id": 4,
+      "membership_state": "subscribed"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+[
+  {
+    "id": 101,
+    "title": "AI governance for boards",
+    "subtitle": "What directors should ask",
+    "slug": "ai-governance-for-boards",
+    "canonical_url": "https://example-pub.substack.com/p/ai-governance-for-boards",
+    "post_date": "2026-09-30T06:00:00.000Z",
+    "audience": "everyone",
+    "comment_count": 2,
+    "truncated_body_text": "Boards need a clear view of model risk.",
+    "publishedBylines": [
+      {
+        "id": 11,
+        "name": "Sample Writer",
+        "handle": "sample-writer"
+      }
+    ],
+    "reaction_count": 40
+  },
+  {
+    "id": 102,
+    "title": "Older thoughts on AI risk",
+    "subtitle": "",
+    "slug": "older-ai-risk",
+    "canonical_url": "https://example-pub.substack.com/p/older-ai-risk",
+    "post_date": "2026-09-26T00:00:00.000Z",
+    "audience": "everyone",
+    "comment_count": 0,
+    "truncated_body_text": "",
+    "publishedBylines": [
+      {
+        "id": 11,
+        "name": "Sample Writer",
+        "handle": "sample-writer"
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "title": "AI and crypto trading signals",
+    "subtitle": "",
+    "slug": "crypto-signals",
+    "canonical_url": "https://example-pub.substack.com/p/crypto-signals",
+    "post_date": "2026-09-30T05:00:00.000Z",
+    "audience": "everyone",
+    "comment_count": 0,
+    "truncated_body_text": "",
+    "publishedBylines": [
+      {
+        "id": 11,
+        "name": "Sample Writer",
+        "handle": "sample-writer"
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "title": "Cybersecurity lessons from an outage",
+    "subtitle": "",
+    "slug": "outage-lessons",
+    "canonical_url": "https://example-pub.substack.com/p/outage-lessons",
+    "post_date": "2026-09-29T20:00:00.000Z",
+    "audience": "everyone",
+    "comment_count": 5,
+    "truncated_body_text": "",
+    "publishedBylines": [
+      {
+        "id": 11,
+        "name": "Sample Writer",
+        "handle": "sample-writer"
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "title": "Seen before: compliance checklist",
+    "subtitle": "",
+    "slug": "seen-checklist",
+    "canonical_url": "https://example-pub.substack.com/p/seen-checklist",
+    "post_date": "2026-09-29T12:00:00.000Z",
+    "audience": "everyone",
+    "comment_count": 0,
+    "truncated_body_text": "",
+    "publishedBylines": [
+      {
+        "id": 11,
+        "name": "Sample Writer",
+        "handle": "sample-writer"
+      }
+    ]
+  },
+  {
+    "id": 106,
+    "title": "Weekend gardening notes",
+    "subtitle": "",
+    "slug": "gardening",
+    "canonical_url": "https://example-pub.substack.com/p/gardening",
+    "post_date": "2026-09-29T10:00:00.000Z",
+    "audience": "everyone",
+    "comment_count": 25,
+    "truncated_body_text": "",
+    "publishedBylines": [
+      {
+        "id": 11,
+        "name": "Sample Writer",
+        "handle": "sample-writer"
+      }
+    ],
+    "reactions": {
+      "❤": 3
+    }
+  }
+]

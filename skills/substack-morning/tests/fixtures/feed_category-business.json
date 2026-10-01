@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "type": "post",
+      "post": {
+        "id": 602,
+        "title": "Fraud trends in fintech",
+        "subtitle": "",
+        "slug": "fraud-trends",
+        "canonical_url": "https://biz-pub.substack.com/p/fraud-trends",
+        "post_date": "2026-09-29T22:00:00.000Z",
+        "audience": "everyone",
+        "comment_count": 3,
+        "truncated_body_text": "",
+        "publishedBylines": [
+          {
+            "id": 11,
+            "name": "Sample Writer",
+            "handle": "sample-writer"
+          }
+        ]
+      },
+      "publication": {
+        "id": 8,
+        "name": "Biz Example",
+        "subdomain": "biz-pub"
+      }
+    }
+  ]
+}
