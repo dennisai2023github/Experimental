@@ -37,8 +37,10 @@ class HomeTestCase(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.home = Path(self._tmp.name) / "home"
-        env = {k: v for k, v in os.environ.items() if k not in ("SUBSTACK_SID", "SUBSTACK_HANDLE")}
+        env = {k: v for k, v in os.environ.items()
+               if k not in ("SUBSTACK_SID", "SUBSTACK_HANDLE", "SUBSTACK_MORNING_CHILD")}
         env["SUBSTACK_MORNING_HOME"] = str(self.home)
+        env["SUBSTACK_MORNING_NO_SPAWN"] = "1"  # never launch claude from tests
         patcher = mock.patch.dict(os.environ, env, clear=True)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -202,25 +204,6 @@ class SetupStatusTests(HomeTestCase):
         with mock.patch.dict(os.environ, {"SUBSTACK_SID": "from_env"}):
             self.assertEqual(sm.load_secrets(self.home, sm.DEFAULT_CONFIG)[0], "from_env")
 
-    def test_status_hook_when_missing_and_present(self):
-        code, out, err = self.run_cli("status", "--hook")
-        self.assertEqual((code, out, err), (0, sm.HOOK_LINE + "\n", ""))
-        briefs = self.home / "briefs"
-        briefs.mkdir(parents=True)
-        (briefs / f"{date.today().isoformat()}.html").write_text("x", encoding="utf-8")
-        code, out, _ = self.run_cli("status", "--hook")
-        self.assertEqual((code, out), (0, ""))
-        code, out, _ = self.run_cli("status")
-        info = json.loads(out)
-        self.assertTrue(info["brief_exists"])
-        self.assertTrue(info["brief_html"].endswith(".html"))
-
-    def test_status_hook_swallows_errors(self):
-        self.home.mkdir(parents=True)
-        (self.home / "config.json").write_text("{not json", encoding="utf-8")
-        code, out, err = self.run_cli("status", "--hook")
-        self.assertEqual((code, err), (0, ""))
-
     def test_check_with_mock_and_missing_cookie(self):
         code, out, _ = self.run_cli("check")
         self.assertEqual(code, 1)
@@ -239,6 +222,143 @@ class SetupStatusTests(HomeTestCase):
             code, _, err = self.run_cli("check")
         self.assertEqual(code, 1)
         self.assertIn("cookie expired, copy a fresh substack.sid", err)
+
+
+# --------------------------------------------------------------------------- SessionStart hook
+
+class HookTests(HomeTestCase):
+    def setUp(self):
+        super().setUp()
+        self.today = date.today().isoformat()
+        self.briefs = self.home / "briefs"
+        self.lock = self.home / "run.lock"
+
+    def hook(self):
+        code, out, err = self.run_cli("status", "--hook")
+        self.assertEqual(code, 0)
+        return out, err
+
+    def state(self):
+        return json.loads((self.home / "state.json").read_text(encoding="utf-8"))
+
+    def make_brief(self):
+        self.briefs.mkdir(parents=True, exist_ok=True)
+        path = self.briefs / f"{self.today}.html"
+        path.write_text("x", encoding="utf-8")
+        return path
+
+    def test_ready_announced_once(self):
+        path = self.make_brief()
+        out, _ = self.hook()
+        self.assertEqual(out, sm.HOOK_READY.format(url=path.resolve().as_uri()) + "\n")
+        self.assertIn("file:///", out)
+        self.assertEqual(self.state()["announced_date"], self.today)
+        self.assertEqual(self.hook()[0], "")
+        info = json.loads(self.run_cli("status")[1])
+        self.assertTrue(info["brief_exists"])
+
+    def test_no_brief_no_lock_spawns(self):
+        out, err = self.hook()
+        self.assertEqual(out, sm.HOOK_PREPARING + "\n")
+        self.assertTrue(self.lock.is_file())
+        self.assertIn("started_at", json.loads(self.lock.read_text(encoding="utf-8")))
+        self.assertIn("would spawn:", err)
+        cmd = json.loads(err.split("would spawn:", 1)[1].strip())
+        self.assertEqual(cmd[:3], ["claude", "-p", sm.CHILD_PROMPT])
+        self.assertEqual(cmd[3:], ["--allowedTools", "Bash(python:*)", "Bash(py:*)", "Read",
+                                   "Write", "Edit", "Skill"])
+        # second session while the lock is fresh: no respawn
+        out, err = self.hook()
+        self.assertEqual((out, err), (sm.HOOK_STILL + "\n", ""))
+
+    def test_stale_lock_respawns(self):
+        self.home.mkdir(parents=True)
+        self.lock.write_text(json.dumps({"started_at": "2000-01-01T00:00:00+00:00"}),
+                             encoding="utf-8")
+        out, err = self.hook()
+        self.assertEqual(out, sm.HOOK_PREPARING + "\n")
+        self.assertIn("would spawn:", err)
+
+    def test_spawn_failure_removes_lock(self):
+        os.environ.pop("SUBSTACK_MORNING_NO_SPAWN")
+        self.run_cli("setup")
+        cfg = json.loads((self.home / "config.json").read_text(encoding="utf-8"))
+        cfg["claude_command"] = "definitely-not-a-real-claude-xyz"
+        (self.home / "config.json").write_text(json.dumps(cfg), encoding="utf-8")
+        out, _ = self.hook()
+        self.assertEqual(out, sm.HOOK_SPAWN_FAILED + "\n")
+        self.assertFalse(self.lock.exists())
+
+    def test_spawn_is_detached_with_child_env(self):
+        os.environ.pop("SUBSTACK_MORNING_NO_SPAWN")
+        with mock.patch.object(sm.shutil, "which", return_value="/usr/bin/claude"), \
+                mock.patch.object(sm.subprocess, "Popen") as popen:
+            out, _ = self.hook()
+        self.assertEqual(out, sm.HOOK_PREPARING + "\n")
+        args, kwargs = popen.call_args
+        self.assertEqual(args[0][0], "/usr/bin/claude")
+        self.assertEqual(kwargs["env"]["SUBSTACK_MORNING_CHILD"], "1")
+        self.assertEqual(Path(kwargs["cwd"]), SCRIPT.parent.parent)
+        if os.name == "nt":
+            self.assertTrue(kwargs["creationflags"])
+        else:
+            self.assertTrue(kwargs["start_new_session"])
+        self.assertTrue((self.home / "logs" / f"{self.today}.log").exists())
+
+    def test_child_process_hook_is_silent(self):
+        with mock.patch.dict(os.environ, {"SUBSTACK_MORNING_CHILD": "1"}):
+            self.assertEqual(self.hook(), ("", ""))
+        self.assertFalse(self.lock.exists())
+
+    def test_auto_run_false_asks(self):
+        self.home.mkdir(parents=True)
+        (self.home / "config.json").write_text('{"auto_run": false}', encoding="utf-8")
+        self.assertEqual(self.hook()[0], sm.HOOK_ASK + "\n")
+        self.assertFalse(self.lock.exists())
+
+    def test_failure_announced_once_and_no_respawn(self):
+        self.write_env()
+        self.lock.write_text("{}", encoding="utf-8")
+        code, out, _ = self.run_cli("fail", "--reason", f"HTTP 401 from substack.com {SENTINEL}")
+        self.assertEqual(code, 0)
+        self.assertFalse(self.lock.exists())
+        err_file = self.briefs / f"{self.today}-error.txt"
+        self.assertNotIn(SENTINEL, err_file.read_text(encoding="utf-8"))
+        out, _ = self.hook()
+        self.assertEqual(out, sm.HOOK_FAILED.format(
+            reason="HTTP 401 from substack.com [redacted]") + "\n")
+        self.assertEqual(self.state()["error_announced_date"], self.today)
+        self.assertEqual(self.hook(), ("", ""))  # announced already, and no spawn
+        self.assertFalse(self.lock.exists())
+
+    def test_hook_swallows_errors(self):
+        self.home.mkdir(parents=True)
+        (self.home / "config.json").write_text("{not json", encoding="utf-8")
+        self.assertEqual(self.hook(), ("", ""))
+
+    def test_open_brief_and_artifact(self):
+        path = self.make_brief()
+        self.lock.write_text("{}", encoding="utf-8")
+        with mock.patch.object(sm.webbrowser, "open") as wb, \
+                mock.patch.object(sm.os, "startfile", create=True) as sf:
+            code, out, _ = self.run_cli("open")
+        self.assertEqual((code, out.strip()), (0, path.resolve().as_uri()))
+        self.assertTrue(wb.called or sf.called)
+        self.assertFalse(self.lock.exists())
+        (self.home / "config.json").write_text(
+            '{"artifact_url": "https://claude.ai/artifact/example"}', encoding="utf-8")
+        # A saved artifact_url must not override today's local page (it could be stale).
+        with mock.patch.object(sm.webbrowser, "open") as wb, \
+                mock.patch.object(sm.os, "startfile", create=True):
+            code, out, _ = self.run_cli("open", "--date", self.today)
+        self.assertEqual(out.strip(), path.resolve().as_uri())
+
+    def test_open_missing_brief(self):
+        with mock.patch.object(sm.webbrowser, "open") as wb:
+            code, _, err = self.run_cli("open", "--date", "2001-01-01")
+        self.assertEqual(code, 1)
+        self.assertIn("no brief found", err)
+        wb.assert_not_called()
 
 
 # --------------------------------------------------------------------------- collect
@@ -433,6 +553,12 @@ class RenderCommitTests(HomeTestCase):
         self.assertEqual(state["seen_ids"], {"post:recent": today, "post:101": today,
                                              "note:501": today})
         self.assertEqual(list(self.home.glob("*.tmp")), [])
+
+    def test_commit_removes_lock(self):
+        self.home.mkdir(parents=True, exist_ok=True)
+        (self.home / "run.lock").write_text("{}", encoding="utf-8")
+        self.run_cli("commit", "--drafts", str(self.write_drafts(valid_drafts())))
+        self.assertFalse((self.home / "run.lock").exists())
 
 
 # --------------------------------------------------------------------------- secret leakage

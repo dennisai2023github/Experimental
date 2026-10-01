@@ -49,13 +49,24 @@ Substack has no official API. If a Substack change breaks one source, the brief 
 
 ## 5. Make it run by itself each morning (Claude Code desktop)
 
-The brief is built by a background Claude session that starts when you open Claude Code. That needs the `claude` command to work from a terminal. Test it:
+The brief is built by a background Claude session that starts when you open Claude Code. That needs the Claude Code command-line tool. The desktop app does not add a `claude` command to the terminal, so install it once:
+
+1. In **Command Prompt** (prompt shows `C:\Users\amule>`), run:
+   ```
+   curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+   ```
+   Or in **PowerShell** (prompt shows `PS C:\Users\amule>`), run:
+   ```
+   irm https://claude.ai/install.ps1 | iex
+   ```
+2. Close the terminal, open a **new** one, and run `claude --version`. It should print a version number.
+3. Run `claude` once and follow the browser sign-in with your Claude account. After that, the background job uses the same login. Type `/exit` to leave.
+
+If step 2 still says `'claude' is not recognized`, the installer's folder is not on your PATH yet. Either restart Windows once, or tell the skill where it is. Open `C:\Users\amule\.substack-morning\config.json` and set:
 
 ```
-claude --version
+"claude_command": "C:\\Users\\amule\\.local\\bin\\claude.exe"
 ```
-
-If Windows says it can't find `claude`, install the Claude Code command-line tool (https://code.claude.com). Or set `"claude_command"` in `C:\Users\amule\.substack-morning\config.json` to its full path.
 
 Next, add the startup hook. Open `C:\Users\amule\.claude\settings.json` (create it if missing) and add:
 

@@ -922,29 +922,159 @@ def cmd_check(args) -> int:
     return 0
 
 
+def lock_path(home: Path) -> Path:
+    return home / "run.lock"
+
+
+def remove_lock(home: Path) -> None:
+    try:
+        lock_path(home).unlink()
+    except FileNotFoundError:
+        pass
+
+
+def lock_is_fresh(home: Path, now: datetime | None = None) -> bool:
+    path = lock_path(home)
+    if not path.is_file():
+        return False
+    now = now or datetime.now(timezone.utc)
+    try:
+        started = parse_dt(json.loads(path.read_text(encoding="utf-8")).get("started_at"))
+    except (ValueError, AttributeError, OSError):
+        started = None
+    if started is None:
+        started = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+    return now - started < LOCK_MAX_AGE
+
+
+def error_path(home: Path, cfg: dict, day: str) -> Path:
+    return brief_dir(home, cfg) / f"{day}-error.txt"
+
+
 def status_info() -> dict:
     home = home_dir()
     cfg = load_config(home)
     today = date.today().isoformat()
     html_path = brief_dir(home, cfg) / f"{today}.html"
-    state_path = home / "state.json"
-    last = None
-    if state_path.is_file():
-        last = json.loads(state_path.read_text(encoding="utf-8")).get("last_brief_at")
+    state = load_state(home)
     exists = html_path.is_file()
     return {"today": today, "brief_exists": exists,
-            "brief_html": str(html_path) if exists else None, "last_brief_at": last}
+            "brief_html": str(html_path) if exists else None,
+            "last_brief_at": state.get("last_brief_at"),
+            "announced_date": state.get("announced_date"),
+            "failed_today": error_path(home, cfg, today).is_file(),
+            "run_in_progress": lock_is_fresh(home)}
+
+
+def spawn_detached(cmd: list, cwd: Path, log_file: Path) -> None:
+    """Start cmd fully detached from this process, logging to log_file."""
+    exe = shutil.which(cmd[0])  # resolves claude.exe / claude.cmd via PATHEXT on Windows
+    if not exe:
+        raise FileNotFoundError(cmd[0])
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ, SUBSTACK_MORNING_CHILD="1")  # child's own hook must not recurse
+    kwargs: dict = {}
+    if os.name == "nt":
+        kwargs["creationflags"] = (getattr(subprocess, "DETACHED_PROCESS", 0)
+                                   | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+    else:
+        kwargs["start_new_session"] = True
+    with open(log_file, "ab") as log:
+        subprocess.Popen([exe] + cmd[1:], cwd=str(cwd), stdout=log, stderr=subprocess.STDOUT,
+                         stdin=subprocess.DEVNULL, env=env, close_fds=True, **kwargs)
+
+
+def start_background_run(home: Path, cfg: dict, today: str) -> str:
+    write_atomic(lock_path(home), json.dumps(
+        {"started_at": datetime.now(timezone.utc).isoformat()}))
+    cmd = [cfg.get("claude_command") or "claude", "-p", CHILD_PROMPT,
+           "--allowedTools", *CHILD_ALLOWED_TOOLS]
+    if os.environ.get("SUBSTACK_MORNING_NO_SPAWN") == "1":
+        print("would spawn: " + json.dumps(cmd), file=sys.stderr)
+        return HOOK_PREPARING
+    try:
+        spawn_detached(cmd, SCRIPT_DIR.parent, home / "logs" / f"{today}.log")
+    except (OSError, ValueError):
+        remove_lock(home)
+        return HOOK_SPAWN_FAILED
+    return HOOK_PREPARING
+
+
+def hook_message() -> str | None:
+    """Decide the single SessionStart line (or None). Side effects: state, lock, spawn."""
+    if os.environ.get("SUBSTACK_MORNING_CHILD") == "1":
+        return None  # we are the background run itself
+    home = home_dir()
+    cfg = load_config(home)
+    load_secrets(home, cfg)
+    today = date.today().isoformat()
+    html_path = brief_dir(home, cfg) / f"{today}.html"
+    if html_path.is_file():
+        state = load_state(home)
+        if state.get("announced_date") == today:
+            return None
+        state["announced_date"] = today
+        save_state(home, state)
+        return HOOK_READY.format(url=html_path.resolve().as_uri())
+    err_file = error_path(home, cfg, today)
+    if err_file.is_file():  # failed today: announce once, never respawn today
+        state = load_state(home)
+        if state.get("error_announced_date") == today:
+            return None
+        state["error_announced_date"] = today
+        save_state(home, state)
+        reason = " ".join(err_file.read_text(encoding="utf-8").split()) or "unknown reason"
+        return HOOK_FAILED.format(reason=redact(reason)[:300])
+    if lock_is_fresh(home):
+        return HOOK_STILL
+    if not cfg.get("auto_run", True):
+        return HOOK_ASK
+    return start_background_run(home, cfg, today)
 
 
 def cmd_status(args) -> int:
     if args.hook:
         try:  # hook mode must never block or break session start
-            if not status_info()["brief_exists"]:
-                print(HOOK_LINE)
+            line = hook_message()
+            if line:
+                print(line)
         except Exception:
             pass
         return 0
     print(json.dumps(status_info(), indent=2))
+    return 0
+
+
+def cmd_open(args) -> int:
+    home = home_dir()
+    cfg = load_config(home)
+    day = args.date or date.today().isoformat()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
+        raise SubstackError("--date must be YYYY-MM-DD")
+    remove_lock(home)
+    # Always open today's local page: unattended runs do not republish an artifact,
+    # so a saved artifact_url could show yesterday's cards.
+    path = (brief_dir(home, cfg) / f"{day}.html").resolve()
+    if not path.is_file():
+        print(f"error: no brief found at {path}", file=sys.stderr)
+        return 1
+    if os.name == "nt":
+        os.startfile(str(path))  # noqa: only exists on Windows
+    else:
+        webbrowser.open(path.as_uri())
+    print(path.as_uri())
+    return 0
+
+
+def cmd_fail(args) -> int:
+    home = home_dir()
+    cfg = load_config(home)
+    load_secrets(home, cfg)  # registers the cookie so redact() can scrub it
+    reason = redact(" ".join(str(args.reason).split()))[:1000] or "unknown reason"
+    path = error_path(home, cfg, date.today().isoformat())
+    write_atomic(path, reason + "\n")
+    remove_lock(home)
+    print(json.dumps({"error_file": str(path)}))
     return 0
 
 
@@ -1020,6 +1150,7 @@ def cmd_commit(args) -> int:
         state["seen_ids"][item_id] = today
     state["last_brief_at"] = drafts.get("generated_at") or datetime.now(timezone.utc).isoformat()
     path = save_state(home, state)
+    remove_lock(home)
     print(json.dumps({"committed": len(ids), "last_brief_at": state["last_brief_at"],
                       "state": str(path)}, indent=2))
     return 0
@@ -1050,6 +1181,12 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("commit", help="mark drafted items as seen")
     s.add_argument("--drafts", required=True)
     s.set_defaults(func=cmd_commit)
+    s = sub.add_parser("open", help="open the brief in the default browser, clear run.lock")
+    s.add_argument("--date", help="YYYY-MM-DD (default today)")
+    s.set_defaults(func=cmd_open)
+    s = sub.add_parser("fail", help="record today's run as failed, clear run.lock")
+    s.add_argument("--reason", required=True)
+    s.set_defaults(func=cmd_fail)
     return p
 
 

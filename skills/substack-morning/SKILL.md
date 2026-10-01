@@ -107,7 +107,7 @@ python scripts/substack_morning.py open
 
 When he next sends a message in Claude Code, the startup hook adds "your Substack brief is ready" plus the clickable link. When you see that note, start your reply with one line giving him the link as a markdown link, then answer what he actually asked.
 
-**Optional artifact.** If the Artifact tool is available in an interactive session, you may also publish the HTML as a private artifact. Use icon `inbox` and the description "Daily queue of Substack posts and Notes to comment on, with drafted replies". Save the returned URL as `artifact_url` in `config.json`; `open` will prefer it from then on. Republish to the same URL on later mornings. Unattended runs keep the local page.
+The local page is always the source of truth, because the link and the browser both point to today's file.
 
 ## Step 8: Report
 

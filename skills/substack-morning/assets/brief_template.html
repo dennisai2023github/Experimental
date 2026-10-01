@@ -123,7 +123,7 @@ const BRIEF = /*__BRIEF_DATA__*/null;
   const items = BRIEF.items;
   const nArt = items.filter(i => i.kind === 'article').length, nNote = items.length - nArt;
   document.getElementById('headline').textContent = 'Comment queue for ' + (BRIEF.date || 'today');
-  document.getElementById('summary').textContent = items.length + ' items: ' + nArt + ' articles, ' + nNote + ' Notes. Reply A is ready to paste. Reply B waits for your view.';
+  document.getElementById('summary').textContent = items.length + ' items: ' + nArt + (nArt === 1 ? ' article, ' : ' articles, ') + nNote + (nNote === 1 ? ' Note. ' : ' Notes. ') + 'Reply A is ready to paste. Reply B waits for your view.';
   const health = document.getElementById('health');
   (BRIEF.source_health || []).forEach(s => {
     health.append(el('span', { class: 'chip ' + (s.status || 'ok'), title: s.error || '', text: s.source + (s.status === 'ok' ? ' ' + (s.count ?? '') : ' ' + s.status) }));
@@ -166,7 +166,7 @@ const BRIEF = /*__BRIEF_DATA__*/null;
       el('span', { class: 'kind' + (isNote ? ' note' : ''), text: isNote ? 'Note' : 'Article' }),
       el('span', { text: [it.writer, it.publication].filter(Boolean).join(' · ') }),
       it.published_at ? el('span', { text: fmtDate(it.published_at) }) : null,
-      el('span', { class: 'num', text: (it.comment_count ?? 0) + ' comments' })
+      el('span', { class: 'num', text: (it.comment_count ?? 0) + ((it.comment_count ?? 0) === 1 ? ' comment' : ' comments') })
     ));
     c.append(el('h2', {}, el('a', { href: it.url, target: '_blank', rel: 'noopener', text: it.title || (isNote ? 'Note by ' + it.writer : 'Untitled') })));
     if (it.why) c.append(el('div', { class: 'why' }, el('b', { text: 'Why this one: ' }), it.why));
