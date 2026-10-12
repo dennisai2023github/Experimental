@@ -1,0 +1,20 @@
+[
+  {
+    "id": 401,
+    "title": "My AI governance notes",
+    "subtitle": "",
+    "slug": "my-notes",
+    "canonical_url": "https://own-pub.substack.com/p/my-notes",
+    "post_date": "2026-09-30T02:00:00.000Z",
+    "audience": "everyone",
+    "comment_count": 0,
+    "truncated_body_text": "",
+    "publishedBylines": [
+      {
+        "id": 999,
+        "name": "Test Owner",
+        "handle": "dennisahking"
+      }
+    ]
+  }
+]

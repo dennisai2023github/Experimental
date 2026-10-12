@@ -1,0 +1,53 @@
+{
+  "items": [
+    {
+      "type": "comment",
+      "comment": {
+        "id": 501,
+        "body": "Hot take: AI risk registers are mostly theatre.",
+        "date": "2026-09-30T07:00:00Z",
+        "user_id": 12,
+        "name": "Sample Writer",
+        "handle": "sample-writer",
+        "reply_count": 1,
+        "reaction_count": 9
+      },
+      "user": {
+        "id": 12,
+        "follower_count": 800
+      }
+    },
+    {
+      "type": "comment",
+      "comment": {
+        "id": 502,
+        "body": "My own note about AI governance.",
+        "date": "2026-09-30T07:30:00Z",
+        "user_id": 999,
+        "name": "Test Owner",
+        "handle": "dennisahking"
+      },
+      "user": {
+        "id": 999,
+        "follower_count": 800
+      }
+    },
+    {
+      "type": "post",
+      "post": {
+        "id": 101,
+        "title": "AI governance for boards",
+        "slug": "ai-governance-for-boards",
+        "canonical_url": "https://example-pub.substack.com/p/ai-governance-for-boards",
+        "post_date": "2026-09-30T06:00:00.000Z",
+        "audience": "everyone"
+      },
+      "publication": {
+        "id": 1,
+        "name": "Example Pub",
+        "subdomain": "example-pub"
+      }
+    }
+  ],
+  "nextCursor": "fake-cursor"
+}

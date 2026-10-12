@@ -1,0 +1,27 @@
+{
+  "results": [
+    {
+      "id": 603,
+      "title": "EU AI Act enforcement begins",
+      "subtitle": "",
+      "slug": "eu-ai-act",
+      "canonical_url": "https://search-pub.substack.com/p/eu-ai-act",
+      "post_date": "2026-09-30T01:00:00Z",
+      "audience": "everyone",
+      "comment_count": 0,
+      "truncated_body_text": "",
+      "publishedBylines": [
+        {
+          "id": 13,
+          "name": "Sample Researcher",
+          "handle": "sample-researcher"
+        }
+      ],
+      "publication": {
+        "id": 9,
+        "name": "Search Example",
+        "subdomain": "search-pub"
+      }
+    }
+  ]
+}
