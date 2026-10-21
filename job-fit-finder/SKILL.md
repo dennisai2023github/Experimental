@@ -1,7 +1,7 @@
 ---
 name: job-fit-finder
 description: >
-  Searches the web for job postings matching your profile (US/UK/Canada) and rates
+  Searches public Canadian job boards for Remote (Canada-eligible) and Hybrid (Canada) postings matching your profile and rates
   how well you fit each one using a 5-dimension scoring framework with hard-stop
   eligibility and language gates. Search and rating only: no CV or cover-letter
   drafting. Triggers on: find jobs, search jobs, rate this job, job fit, am I a fit,
@@ -17,7 +17,7 @@ Local, self-contained job search and fit-rating skill. Everything it needs lives
 |------|---------|
 | `profile.md` | YOUR data: skills, experience, goals, deal-breakers, languages, work rights. Edit this. |
 | `evaluation-framework.md` | The scoring model: gates, 5 dimensions, weights, thresholds, output format. |
-| `search-strategy.md` | How to turn your profile into search queries for US/UK/Canada boards. |
+| `search-strategy.md` | How to turn your profile into search queries for public Canadian job boards (Remote + Hybrid, Canada only). |
 | `seen_jobs.md` | Auto-maintained log of postings already shown and their scores (created on first run). |
 
 ## Modes
@@ -36,7 +36,9 @@ Read `profile.md` and `evaluation-framework.md`. If `profile.md` still contains 
 
 ## Step 1: Search (modes Search only)
 
-Read `search-strategy.md`. Build queries from the profile (function first, titles as variants). Run the top 3 priority categories (all if `broad`) with WebSearch, in parallel where possible. Prefer direct employer career pages and ATS links (Greenhouse, Lever, Workday, Ashby) over aggregator listing pages. Collect candidate postings (title, company, location, URL).
+Read `search-strategy.md`. Build queries from the profile (function first, titles as variants). Run the top 3 priority categories (all if `broad`) with WebSearch, in parallel where possible. Prefer direct employer career pages and ATS links (Greenhouse, Lever, Workday, Ashby) over aggregator listing pages. Search public Canadian boards (see `search-strategy.md`). Collect candidate postings (title, company, location, work mode, URL).
+
+**Scope filter (hard): Remote or Hybrid, Canada only.** Keep Remote roles a Canada-based person can hold ("Remote - Canada", "Remote - North America" where Canada isn't excluded) and Hybrid roles with a Canadian office. Drop on-site roles, roles outside Canada, and remote roles restricted to another country or US state. List dropped roles under "Out of scope" with a one-line reason; do not score them. If the work mode or location is unclear, fetch the posting before deciding.
 
 Dedupe: skip any URL or company+title already in `seen_jobs.md` unless `--all`. Cap to `--limit`.
 

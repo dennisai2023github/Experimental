@@ -63,10 +63,12 @@ Based on the behavioral section of `profile.md` and signals in the posting (auto
 Red flags to note: disorganized-sounding department, work dominated by maintenance, vague scope, "fast-paced/wear many hats" with no substance, unrealistic requirement stacks.
 
 ### 4. Location & Logistics (Pass / Fail / Flag) - not weighted
-- Within commute range, or remote that fits your region/time-zone: PASS
-- Requires relocation you've ruled out: FAIL (deal-breaker)
-- Heavy travel or hybrid days above your limit: FLAG
-- Remote but restricted to a country/state you can't work in: FAIL
+Scope is **Remote or Hybrid, in Canada only**.
+- Remote and open to people living in Canada: PASS
+- Hybrid with a Canadian office within reach of your home base (or a city you'll relocate to): PASS
+- Hybrid where in-office days exceed your limit in `profile.md`, or heavy travel: FLAG
+- Fully on-site, outside Canada, or remote restricted to another country/US state: FAIL (out of scope, not scored)
+- Remote but requires residence in a specific province, or occasional office attendance: FLAG with details
 
 ### 5. Career Alignment & Motivation (0-100) - weight 30%
 Does the role advance your stated goals and contain tasks that energize rather than drain? Also weigh your life-situation constraints (security, flexibility, development priorities) from `profile.md`.

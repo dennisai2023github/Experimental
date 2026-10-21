@@ -12,16 +12,16 @@ The skill reads this file before every run. If Sections 1-4 still contain [BRACK
 
 ## 2. Location & Work Mode
 - Home base: [city, country]
-- Search markets: [US / UK / Canada - which cities or "remote"]
-- Remote / hybrid / on-site preference: [..]
+- Search market: Canada only (Remote + Hybrid; no on-site)
+- Hybrid: Canadian cities/commute range I accept: [e.g. Toronto, Ottawa]
+- Max office days per week for hybrid: [e.g. 2-3]
+- Province restrictions for remote: [none / only X]
 - Relocation: [yes / no / only for X]
 - Travel tolerance: [e.g. up to 20%]
 
 ## 3. Work Rights & Languages
 - Citizenship / PR / visa status per market:
-  - US: [citizen / PR / visa type / none]
-  - UK: [..]
-  - Canada: [..]
+  - Canada: [citizen / PR / work permit type + expiry / none]
 - Security clearance held: [none / level]
 - Hours/start-date limits on permit: [none / details]
 
